@@ -1,6 +1,8 @@
 package io.github.mateusbosquetti.picpayapi.services;
 
+import io.github.mateusbosquetti.picpayapi.infra.exception.UnauthorizedTransactionException;
 import io.github.mateusbosquetti.picpayapi.model.dto.request.TransactionRequestDTO;
+import io.github.mateusbosquetti.picpayapi.model.dto.response.TransactionResponseDTO;
 import io.github.mateusbosquetti.picpayapi.model.entity.Transaction;
 import io.github.mateusbosquetti.picpayapi.model.entity.User;
 import io.github.mateusbosquetti.picpayapi.repository.TransactionRepository;
@@ -24,7 +26,7 @@ public class TransactionService {
     private RestTemplate restTemplate;
     private NotificationService notificationService;
 
-    public Transaction createTransaction(TransactionRequestDTO transactionRequestDTO) throws Exception {
+    public TransactionResponseDTO createTransaction(TransactionRequestDTO transactionRequestDTO) {
 
         Transaction transaction = transactionRequestDTO.toEntity(userService);
         User sender = transaction.getSender();
@@ -32,10 +34,7 @@ public class TransactionService {
 
         userService.validateTransaction(sender, transactionRequestDTO.value());
 
-        boolean isAuthorized = authorizeTransaction(sender, transactionRequestDTO.value());
-        if (!isAuthorized) {
-            throw new Exception("Transação não autorizada");
-        }
+        authorizeTransaction(sender, transactionRequestDTO.value());
 
         sender.setBalance(
                 sender.getBalance().subtract(transaction.getAmount())
@@ -52,18 +51,16 @@ public class TransactionService {
         notificationService.sendNotification(sender, "ransação realizada com sucesso");
         notificationService.sendNotification(receiver, "Transação realizada com sucesso");
 
-        return transaction;
+        return transaction.toDTO();
 
     }
 
-    private boolean authorizeTransaction(User sender, BigDecimal value) {
-        ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity("https://util.devi.tools/api/v2/authorize", Map.class);
-
-        if (authorizationResponse.getStatusCode() == HttpStatus.OK) {
-            String message = (String) authorizationResponse.getBody().get("status");
-            return "success".equalsIgnoreCase(message);
-        } else return false;
-
+    private void authorizeTransaction(User sender, BigDecimal value) {
+        try {
+            ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity("https://util.devi.tools/api/v2/authorize", Map.class);
+        } catch (Exception e) {
+            throw new UnauthorizedTransactionException();
+        }
     }
 
 }

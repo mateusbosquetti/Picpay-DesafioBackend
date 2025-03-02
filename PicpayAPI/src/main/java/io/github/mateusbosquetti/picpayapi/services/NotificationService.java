@@ -14,7 +14,7 @@ public class NotificationService {
 
     private RestTemplate restTemplate;
 
-    public void sendNotification(User user, String message) throws Exception {
+    public void sendNotification(User user, String message)  {
         String email = user.getEmail();
 
         NotificationRequestDTO notificationRequestDTO = new NotificationRequestDTO(email, message);
@@ -28,8 +28,6 @@ public class NotificationService {
         }
 
          */
-
-        System.out.println("Notificação enviada com sucesso!");
 
     }
 
