@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public record ExceptionResponseDTO (
         String message,
-        HttpStatus statusCode
+        HttpStatus statusCode,
+        Class exception
 ) {
 }

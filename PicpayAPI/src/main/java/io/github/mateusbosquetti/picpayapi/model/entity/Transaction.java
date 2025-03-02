@@ -1,5 +1,6 @@
 package io.github.mateusbosquetti.picpayapi.model.entity;
 
+import io.github.mateusbosquetti.picpayapi.model.dto.response.TransactionResponseDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,4 +37,13 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime timeStamp;
 
+    public TransactionResponseDTO toDTO() {
+        return new TransactionResponseDTO(
+                this.id,
+                this.amount,
+                this.sender.toDTO(),
+                this.receiver.toDTO(),
+                this.timeStamp
+        );
+    }
 }
